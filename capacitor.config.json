@@ -1,0 +1,13 @@
+{
+  "appId": "com.example.ttangttarush",
+  "appName": "땅따 러시",
+  "webDir": "www",
+  "backgroundColor": "#EDF2F5",
+  "android": {
+    "backgroundColor": "#EDF2F5"
+  },
+  "ios": {
+    "backgroundColor": "#EDF2F5",
+    "contentInset": "never"
+  }
+}

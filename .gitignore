@@ -1,0 +1,18 @@
+node_modules/
+.DS_Store
+*.log
+
+# 앱 빌드 결과물 (android/, ios/ 폴더 자체는 커밋해도 됩니다)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+
+# 서명 키는 절대 올리지 마세요
+*.jks
+*.keystore
+*.p12
+*.mobileprovision

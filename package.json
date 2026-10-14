@@ -1,0 +1,23 @@
+{
+  "name": "ttangtta-rush",
+  "version": "0.1.0",
+  "private": true,
+  "description": "선을 긋고 돌아오면 감싼 곳이 전부 내 땅! 2분 30초 땅따먹기 게임",
+  "scripts": {
+    "start": "http-server www -p 8000 -c-1",
+    "android:add": "cap add android",
+    "ios:add": "cap add ios",
+    "sync": "cap sync",
+    "android:open": "cap open android",
+    "ios:open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
+    "http-server": "^14.1.1"
+  }
+}

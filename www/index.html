@@ -1,0 +1,1069 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>땅따 러시</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#2547D0">
+<meta name="description" content="선을 긋고 돌아오면 감싼 곳이 전부 내 땅! 2분 30초 땅따먹기 게임">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="땅따 러시">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: full-bleed graph-paper game board; every menu surface is a raised "tile" like the territory itself */
+:root{
+  --paper:#EDF2F5; --paper-deep:#DCE5EB; --grid:#D3DEE6;
+  --ink:#1D2738; --ink-soft:#56657A; --line:#C7D3DD;
+  --card:#FFFFFF; --blue:#2547D0; --blue-dark:#152C8F;
+  --sun:#FFC83D; --sun-dark:#C98F0C; --red:#E5394F;
+  --f-display:"Jua","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  --f-body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  color-scheme: light;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}
+#app{position:relative;width:100%;height:100%;overflow:hidden}
+#game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;background:var(--paper-deep)}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+/* ---------- overlay screens ---------- */
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.veil{background:rgba(237,242,245,.80);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.col{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+.topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);
+  border-radius:999px;padding:5px 12px 5px 6px;font-family:var(--f-display);font-size:16px;line-height:1}
+.pill .ico{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;color:#fff}
+.ico.coin{background:var(--sun);color:#6b4b00;border-radius:50%;box-shadow:inset 0 -2px 0 var(--sun-dark)}
+.ico.lv{background:var(--blue)}
+.ico.fire{background:var(--red)}
+.spacer{flex:1}
+.iconbtn{width:38px;height:38px;border-radius:12px;background:var(--card);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);
+  display:grid;place-items:center}
+.iconbtn svg{width:20px;height:20px}
+.xpbar{height:8px;border-radius:99px;background:var(--paper-deep);overflow:hidden;width:70px}
+.xpbar i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+
+.logo{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:6px}
+.logo .tiles{display:flex;gap:10px}
+.logo .t{width:92px;height:92px;border-radius:20px;display:grid;place-items:center;font-family:var(--f-display);font-size:60px;color:#fff;line-height:1;
+  text-shadow:0 3px 0 rgba(0,0,0,.18)}
+.logo .t.a{background:#19B394;box-shadow:0 9px 0 #0E7A64;transform:rotate(-5deg)}
+.logo .t.b{background:#FF8A1F;box-shadow:0 9px 0 #C25E05;transform:rotate(4deg) translateY(6px)}
+.logo .word{font-family:var(--f-display);font-size:40px;letter-spacing:.12em;margin-top:10px;color:var(--ink)}
+.logo .tag{font-size:15px;color:var(--ink-soft);text-wrap:balance;text-align:center}
+
+.tile-btn{display:block;width:100%;border-radius:18px;background:var(--blue);color:#fff;font-family:var(--f-display);font-size:28px;
+  padding:16px 0 14px;box-shadow:0 7px 0 var(--blue-dark);transition:transform .08s, box-shadow .08s;letter-spacing:.04em}
+.tile-btn:active{transform:translateY(5px);box-shadow:0 2px 0 var(--blue-dark)}
+.tile-btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--line);box-shadow:0 5px 0 var(--line);font-size:20px;padding:12px 0 10px}
+.tile-btn.ghost:active{box-shadow:0 1px 0 var(--line)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;box-shadow:0 4px 0 var(--line);padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.card h3{margin:0;font-family:var(--f-display);font-weight:400;font-size:19px;display:flex;align-items:baseline;gap:8px}
+.card h3 small{font-family:var(--f-body);font-size:12px;color:var(--ink-soft)}
+
+.skins{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory}
+.skin{flex:0 0 auto;width:76px;display:flex;flex-direction:column;align-items:center;gap:6px;scroll-snap-align:start}
+.skin .sw{width:62px;height:62px;border-radius:16px;position:relative;transition:transform .12s}
+.skin.sel .sw{outline:3px solid var(--ink);outline-offset:3px}
+.skin .nm{font-size:12px;text-align:center;line-height:1.2;min-height:2.4em}
+.skin.locked .sw{filter:grayscale(.85) brightness(1.08);opacity:.65}
+.skin .lk{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-display);font-size:13px;color:var(--ink);text-align:center;line-height:1.15}
+.skin.buy .sw{outline:3px dashed var(--sun-dark);outline-offset:3px}
+
+.mission{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.mission .mt{font-size:14px}
+.mission .mr{font-family:var(--f-display);font-size:14px;color:#8a6200;display:flex;align-items:center;gap:4px}
+.mission .bar{grid-column:1/-1;height:8px;border-radius:99px;background:var(--paper-deep);overflow:hidden}
+.mission .bar i{display:block;height:100%;background:#19B394;border-radius:99px}
+.mission.done .mt{color:var(--ink-soft);text-decoration:line-through}
+.mission.done .mr{color:#0E7A64}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats b{display:block;font-family:var(--f-display);font-weight:400;font-size:24px}
+.stats span{font-size:12px;color:var(--ink-soft)}
+.link{font-size:14px;color:var(--blue);text-decoration:underline;text-underline-offset:3px;align-self:center;padding:6px}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;left:0;right:0;top:0;pointer-events:none;
+  padding-block:10px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+#hud .left{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+#hud .lrow{display:flex;gap:8px;align-items:center}
+#pauseBtn{pointer-events:auto}
+#timer{font-family:var(--f-display);font-size:20px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:6px 10px 4px;box-shadow:0 3px 0 var(--line);min-width:64px;text-align:center}
+#timer.hurry{color:var(--red);animation:pulse .5s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+#mine{font-family:var(--f-display);font-size:38px;line-height:1;color:var(--ink);text-shadow:0 2px 0 #fff,0 -2px 0 #fff,2px 0 0 #fff,-2px 0 0 #fff}
+#mine small{font-size:18px}
+#board{background:rgba(255,255,255,.88);border:2px solid var(--line);border-radius:14px;padding:6px 8px;min-width:128px;display:flex;flex-direction:column;gap:2px}
+#board .r{display:grid;grid-template-columns:14px 1fr auto;gap:6px;align-items:center;font-size:13px;line-height:1.35}
+#board .r i{width:12px;height:12px;border-radius:4px;display:block}
+#board .r.me{font-weight:700;color:var(--blue)}
+#board .r b{font-family:var(--f-display);font-weight:400}
+#mini{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:16px;width:84px;height:84px;border-radius:12px;border:2px solid var(--line);
+  background:var(--paper);box-shadow:0 3px 0 var(--line);image-rendering:pixelated;pointer-events:none}
+#tip{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);max-width:min(330px,calc(100% - 140px));background:var(--ink);color:#fff;
+  border-radius:14px;padding:9px 14px;font-size:14px;text-align:center;line-height:1.4;pointer-events:none;transition:opacity .4s}
+#count{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:var(--f-display);font-size:96px;color:var(--ink);
+  text-shadow:0 5px 0 #fff}
+#count span{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+
+/* ---------- results ---------- */
+.headline{text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
+.headline .rank{font-family:var(--f-display);font-size:64px;line-height:1}
+.headline .sub{font-size:15px;color:var(--ink-soft);text-wrap:balance}
+.badge{font-family:var(--f-display);font-size:15px;background:var(--sun);color:#5a3f00;padding:5px 12px 3px;border-radius:10px;box-shadow:0 3px 0 var(--sun-dark)}
+.rw{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.rw:last-child{border-bottom:0}
+.rw b{font-family:var(--f-display);font-weight:400;color:#8a6200}
+.total{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-display);font-size:22px}
+.lvline{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:16px}
+.lvline .xpbar{flex:1;width:auto;height:12px}
+.unlock{display:flex;align-items:center;gap:12px;background:#FFF6DA;border:2px solid var(--sun);border-radius:14px;padding:10px 12px}
+.unlock .sw{width:44px;height:44px;border-radius:12px;flex:0 0 auto}
+.unlock div{font-size:14px;line-height:1.4}
+.unlock b{font-family:var(--f-display);font-weight:400;font-size:17px}
+
+/* ---------- how to ---------- */
+.steps{display:flex;flex-direction:column;gap:14px}
+.step{display:grid;grid-template-columns:88px 1fr;gap:12px;align-items:center}
+.step svg{width:88px;height:88px;border-radius:12px;background:var(--paper)}
+.step p{margin:0;font-size:15px;line-height:1.5}
+.step b{font-family:var(--f-display);font-weight:400;font-size:17px;display:block}
+.keys{font-size:14px;color:var(--ink-soft);line-height:1.6}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<div id="app">
+  <canvas id="game" aria-label="게임 화면"></canvas>
+
+  <div id="hud" hidden>
+    <div class="left">
+      <div class="lrow">
+        <button class="iconbtn" id="pauseBtn" aria-label="일시정지">
+          <svg viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1.5" fill="#1D2738"/><rect x="12" y="3" width="4" height="14" rx="1.5" fill="#1D2738"/></svg>
+        </button>
+        <div id="timer">2:30</div>
+      </div>
+      <div id="mine">0.0<small>%</small></div>
+    </div>
+    <div id="board"></div>
+  </div>
+  <canvas id="mini" width="64" height="64" hidden></canvas>
+  <div id="tip" hidden></div>
+  <div id="count" hidden></div>
+
+  <!-- TITLE -->
+  <section class="screen veil" id="title">
+    <div class="col">
+      <div class="topbar">
+        <div class="pill"><span class="ico lv" id="tLv">1</span><div class="xpbar"><i id="tXp" style="width:0%"></i></div></div>
+        <div class="pill"><span class="ico coin">C</span><span id="tCoins">0</span></div>
+        <div class="pill" id="tStreakPill" hidden><span class="ico fire">일</span><span id="tStreak">1</span>일째</div>
+        <span class="spacer"></span>
+        <button class="iconbtn" id="soundBtn" aria-label="소리 켜기/끄기"></button>
+      </div>
+
+      <div class="logo">
+        <div class="tiles"><div class="t a">땅</div><div class="t b">따</div></div>
+        <div class="word">러시</div>
+        <div class="tag">선을 긋고 돌아오면, 감싼 곳이 전부 내 땅!</div>
+      </div>
+
+      <button class="tile-btn" id="playBtn">시작하기</button>
+
+      <div class="card">
+        <h3>내 스킨 <small id="skinHint">눌러서 고르기</small></h3>
+        <div class="skins" id="skins"></div>
+      </div>
+
+      <div class="card">
+        <h3>오늘의 미션 <small>매일 자정에 바뀌어요</small></h3>
+        <div id="missions" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+
+      <div class="card">
+        <h3>내 기록</h3>
+        <div class="stats">
+          <div><b id="sBest">0%</b><span>최고 점령</span></div>
+          <div><b id="sWins">0</b><span>1위 횟수</span></div>
+          <div><b id="sKills">0</b><span>끊은 선</span></div>
+        </div>
+      </div>
+
+      <button class="link" id="howBtn">게임 방법 보기</button>
+    </div>
+  </section>
+
+  <!-- HOW TO -->
+  <section class="screen veil" id="howto" hidden>
+    <div class="col">
+      <div class="card">
+        <h3>게임 방법 <small>한 판 2분 30초</small></h3>
+        <div class="steps">
+          <div class="step">
+            <svg viewBox="0 0 88 88" aria-hidden="true">
+              <rect x="10" y="44" width="30" height="30" rx="4" fill="#8EE3CF"/>
+              <path d="M34 50 L34 22 L66 22 L66 40" stroke="#19B394" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+              <rect x="58" y="36" width="16" height="16" rx="4" fill="#19B394"/>
+            </svg>
+            <p><b>1. 밖으로 나가 선 긋기</b>내 땅 밖으로 나가면 지나간 자리에 선이 남아요.</p>
+          </div>
+          <div class="step">
+            <svg viewBox="0 0 88 88" aria-hidden="true">
+              <rect x="10" y="44" width="30" height="30" rx="4" fill="#8EE3CF"/>
+              <rect x="10" y="18" width="62" height="56" rx="4" fill="#8EE3CF"/>
+              <rect x="24" y="48" width="16" height="16" rx="4" fill="#19B394"/>
+            </svg>
+            <p><b>2. 돌아오면 내 땅</b>다시 내 땅에 닿는 순간, 선으로 감싼 곳이 전부 내 땅이 돼요.</p>
+          </div>
+          <div class="step">
+            <svg viewBox="0 0 88 88" aria-hidden="true">
+              <path d="M14 60 L44 60 L44 26" stroke="#19B394" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+              <rect x="36" y="18" width="16" height="16" rx="4" fill="#19B394"/>
+              <path d="M72 44 L46 44" stroke="#FF8A1F" stroke-width="7" stroke-linecap="round" opacity=".7"/>
+              <rect x="34" y="36" width="16" height="16" rx="4" fill="#FF8A1F"/>
+            </svg>
+            <p><b>3. 선을 지켜요</b>누가 내 선을 밟으면 탈락! 반대로 상대 선을 밟으면 상대가 탈락해요.</p>
+          </div>
+        </div>
+        <div class="keys">휴대폰: 화면을 원하는 방향으로 밀기<br>컴퓨터: 방향키 또는 W·A·S·D, 스페이스로 일시정지</div>
+      </div>
+      <button class="tile-btn" id="howClose">알겠어요</button>
+    </div>
+  </section>
+
+  <!-- PAUSE -->
+  <section class="screen veil" id="pause" hidden>
+    <div class="col" style="padding-top:18vh">
+      <div class="headline"><div class="rank">잠깐 쉬어요</div></div>
+      <button class="tile-btn" id="resumeBtn">계속하기</button>
+      <button class="tile-btn ghost" id="quitBtn">그만하고 홈으로</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen veil" id="results" hidden>
+    <div class="col">
+      <div class="headline">
+        <div class="badge" id="rBadge">시간 종료</div>
+        <div class="rank" id="rRank">1위</div>
+        <div class="sub" id="rSub"></div>
+      </div>
+      <div class="card">
+        <div class="stats">
+          <div><b id="rPct">0%</b><span>차지한 땅</span></div>
+          <div><b id="rKills">0</b><span>끊은 선</span></div>
+          <div><b id="rCombo">x0</b><span>최고 연속</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>보상</h3>
+        <div id="rRewards"></div>
+        <div class="total"><span>합계</span><span style="display:flex;align-items:center;gap:6px"><span class="ico coin" style="width:24px;height:24px;display:grid;place-items:center;font-size:12px">C</span><span id="rTotal">0</span></span></div>
+        <div class="lvline"><span id="rLv">Lv 1</span><div class="xpbar"><i id="rXp" style="width:0%"></i></div><span id="rXpTxt" style="font-size:13px;color:var(--ink-soft)">+0 XP</span></div>
+        <div id="rUnlocks" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div class="row2">
+        <button class="tile-btn ghost" id="homeBtn">홈</button>
+        <button class="tile-btn" id="againBtn" style="font-size:24px">한 판 더</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ================= constants ================= */
+const W = 64, H = 64, N = W * H;
+const ROUND = 150;            // seconds per round
+const CONQUER = 0.6;          // 60% = instant win
+const DX = [1, 0, -1, 0], DY = [0, 1, 0, -1]; // right, down, left, up
+
+const PALETTE = [
+  { c:'#19B394', l:'#8EE3CF', d:'#0E7A64' }, // 0 mint
+  { c:'#FF8A1F', l:'#FFC890', d:'#C25E05' }, // 1 orange
+  { c:'#4C5FE8', l:'#A9B3F7', d:'#2B3AB0' }, // 2 blueberry
+  { c:'#E8405A', l:'#F6A2AF', d:'#A8213A' }, // 3 cherry
+  { c:'#7CC234', l:'#C5E8A0', d:'#4F8A15' }, // 4 lime
+  { c:'#9B4DDB', l:'#D4AEF2', d:'#6B26A6' }, // 5 grape
+  { c:'#1A9FD9', l:'#99D6F2', d:'#0F6E99' }, // 6 sea
+  { c:'#E3A90B', l:'#F7DC8A', d:'#9E7406' }, // 7 gold
+  { c:'#F06BA8', l:'#F9B9D6', d:'#B33A73' }, // 8 peach
+  { c:'#6C7A89', l:'#BAC3CC', d:'#46525E' }, // 9 stone
+];
+const SKINS = [
+  { name:'민트 콩',   col:0, pat:'none',   lv:1,  price:0 },
+  { name:'귤 상자',   col:1, pat:'none',   lv:2,  price:120 },
+  { name:'블루베리',  col:2, pat:'dot',    lv:3,  price:180 },
+  { name:'체리 줄무늬',col:3, pat:'stripe', lv:4,  price:240 },
+  { name:'라임 체크', col:4, pat:'check',  lv:6,  price:320 },
+  { name:'포도 방울', col:5, pat:'dot',    lv:8,  price:400 },
+  { name:'파도',      col:6, pat:'stripe', lv:10, price:480 },
+  { name:'황금 타일', col:7, pat:'check',  lv:12, price:600 },
+  { name:'복숭아',    col:8, pat:'dot',    lv:15, price:700 },
+];
+const BOT_NAMES = ['콩이','보리','모찌','달래','탱자','호두','깨비','두부','솜이','감자','율무','찹쌀'];
+const PATS = ['none','dot','stripe','check'];
+
+const MISSIONS = {
+  area:    { targets:[10,15,20], txt:x=>`한 판에 땅 ${x}% 차지하기`, rw:40 },
+  kills:   { targets:[1,2,3],    txt:x=>`상대 선 ${x}번 끊기`,       rw:40 },
+  games:   { targets:[3,5],      txt:x=>`${x}판 플레이하기`,          rw:30 },
+  combo:   { targets:[2,3],      txt:x=>`연속 점령 x${x} 달성하기`,   rw:35 },
+  survive: { targets:[1,2],      txt:x=>`끝까지 살아남기 ${x}번`,     rw:50 },
+  top:     { targets:[1],        txt:()=>`1위 하기`,                  rw:60 },
+};
+
+/* ================= profile (per-viewer, local) ================= */
+const KEY = 'ttangtta-rush-v1';
+const DEF = { coins:0, xp:0, level:1, skin:0, owned:[0], best:0, games:0, kills:0, wins:0,
+  streak:0, lastDay:'', daily:null, sound:true, tutorial:0 };
+let P = load();
+function load(){
+  const base = JSON.parse(JSON.stringify(DEF));
+  try { const s = localStorage.getItem(KEY); if (s) return Object.assign(base, JSON.parse(s)); } catch(e){}
+  return base;
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e){} }
+function dayStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const today = () => dayStr(new Date());
+const yesterday = () => { const d = new Date(); d.setDate(d.getDate()-1); return dayStr(d); };
+const xpNeed = lv => 100 + 50 * (lv - 1);
+
+function ensureDaily(){
+  const d = today();
+  if (P.daily && P.daily.date === d) return;
+  let seed = 0; for (const ch of d) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const next = () => (seed = (seed * 1103515245 + 12345) >>> 0) >>> 8;
+  const pool = Object.keys(MISSIONS), ms = [];
+  for (let k = 0; k < 3; k++){
+    const t = pool.splice(next() % pool.length, 1)[0];
+    const m = MISSIONS[t];
+    ms.push({ t, target: m.targets[next() % m.targets.length], prog:0, done:false });
+  }
+  P.daily = { date:d, ms };
+  save();
+}
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random() * n);
+const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+const turn = (d, s) => (d + s + 4) & 3;
+const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1); return w + ((c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? a : b); };
+const hexRgb = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+
+/* ================= audio ================= */
+let AC = null;
+function ac(){
+  if (!AC){ try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ AC = null; } }
+  if (AC && AC.state === 'suspended') { try { AC.resume(); } catch(e){} }
+  return AC;
+}
+function tone(f, dur, type='sine', vol=.1, when=0, slide=0){
+  if (!P.sound) return; const a = ac(); if (!a) return;
+  try {
+    const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + .03);
+  } catch(e){}
+}
+function sfx(name, n=1){
+  if (name === 'cap'){ const k = Math.min(5, 1 + Math.floor(n)); const base = [523,659,784,988,1175,1319];
+    for (let i=0;i<k;i++) tone(base[i], .14, 'triangle', .09, i*.055); }
+  else if (name === 'kill'){ tone(880,.08,'square',.06); tone(1320,.16,'triangle',.08,.06); }
+  else if (name === 'die'){ tone(440,.5,'sawtooth',.07,0,.25); }
+  else if (name === 'tick'){ tone(1000,.05,'square',.04); }
+  else if (name === 'go'){ tone(660,.1,'triangle',.08); tone(990,.2,'triangle',.08,.1); }
+  else if (name === 'count'){ tone(520,.09,'triangle',.07); }
+  else if (name === 'lvl'){ [523,659,784,1047].forEach((f,i)=>tone(f,.22,'triangle',.09,i*.09)); }
+  else if (name === 'coin'){ tone(1568,.06,'square',.03); }
+}
+function buzz(ms){ try { navigator.vibrate && navigator.vibrate(ms); } catch(e){} }
+
+/* ================= match ================= */
+let G = null;
+
+function makeEnt(id, col, pat, name, isPlayer){
+  return { id, col: PALETTE[col], colIdx: col, pat, name, isPlayer,
+    x:0, y:0, md:0, q:[], prog:0, speed: isPlayer ? 7 : 6 + Math.random()*0.7,
+    alive:false, trailCells:[], kills:0, respawn:0, deathArea:0,
+    combo:0, lastCap:-99, bestCombo:0, spawnT:0,
+    ai: { mode:'exit', s:0, legA:4, legB:4, side:1,
+          aggr: .15 + Math.random()*.5, greed: .8 + Math.random()*.8 + Math.min(.6, (P.level-1)*.04),
+          maxTrail: 14 + rnd(14) } };
+}
+
+function newMatch(mode){
+  const g = {
+    mode, owner:new Uint8Array(N), trail:new Uint8Array(N), counts:new Int32Array(16),
+    vis:new Uint8Array(N), q:new Int32Array(N), vis2:new Uint8Array(N), q2:new Int32Array(N),
+    fd:new Int8Array(N), dist:new Int16Array(N),
+    ents:[], player:null, time:0, countdown: mode==='play' ? 2.6 : 0, over:false, paused:false,
+    parts:[], floats:[], shake:0, camX:W/2, camY:H/2, endDelay:-1, conquer:false, lastTick:-1,
+    follow:0, deathReason:'', killerName:null, tutT:0
+  };
+  G = g;
+  const used = new Set();
+  if (mode === 'play'){
+    const sk = SKINS[P.skin] || SKINS[0];
+    const p = makeEnt(1, sk.col, sk.pat, '나', true);
+    g.ents.push(p); g.player = p; used.add(sk.col);
+  }
+  const names = BOT_NAMES.slice().sort(()=>Math.random()-.5);
+  while (g.ents.length < 6){
+    let c; do { c = rnd(PALETTE.length); } while (used.has(c)); used.add(c);
+    g.ents.push(makeEnt(g.ents.length + 1, c, PATS[rnd(4)], names.pop(), false));
+  }
+  for (const e of g.ents) spawn(e);
+  const f = g.player || g.ents[0];
+  g.camX = f.x + .5; g.camY = f.y + .5;
+  return g;
+}
+
+function setOwner(i, id){
+  const g = G, p = g.owner[i]; if (p === id) return;
+  if (p) g.counts[p]--; g.owner[i] = id; if (id) g.counts[id]++;
+}
+
+function spawn(e){
+  const g = G; let cx = 0, cy = 0, ok = false;
+  for (let t = 0; t < 400 && !ok; t++){
+    cx = 5 + rnd(W - 10); cy = 5 + rnd(H - 10); ok = true;
+    for (let dy = -3; dy <= 3 && ok; dy++) for (let dx = -3; dx <= 3; dx++){
+      const i = (cy+dy)*W + cx+dx; if (g.owner[i] || g.trail[i]) { ok = false; break; }
+    }
+    if (ok) for (const o of g.ents) if (o !== e && o.alive && Math.abs(o.x-cx)+Math.abs(o.y-cy) < 9) { ok = false; break; }
+  }
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){
+    if (Math.abs(dx) === 2 && Math.abs(dy) === 2) continue;
+    setOwner((cy+dy)*W + cx+dx, e.id);
+  }
+  e.x = cx; e.y = cy; e.prog = 0; e.alive = true; e.trailCells = []; e.q = [];
+  e.md = rnd(4); e.spawnT = g.time; e.combo = 0;
+  e.ai.mode = 'exit'; e.ai.s = 0;
+}
+
+/* ---------- core rules ---------- */
+function step(e){
+  const g = G;
+  if (!inb(e.x + DX[e.md], e.y + DY[e.md])){
+    // walls are friendly: slide along them instead of losing the round
+    const opts = [turn(e.md, 1), turn(e.md, -1)].filter(d => inb(e.x + DX[d], e.y + DY[d]));
+    const ok = opts.filter(d => g.trail[(e.y + DY[d])*W + e.x + DX[d]] !== e.id);
+    e.md = (ok[0] ?? opts[0] ?? e.md);
+    e.q = [];
+  }
+  const nx = e.x + DX[e.md], ny = e.y + DY[e.md];
+  if (!inb(nx, ny)) { kill(e, null, '벽에 갇혔어요'); return; }
+  const from = e.y*W + e.x;
+  e.x = nx; e.y = ny;
+  if (!e.trailCells.length) e.trailFrom = from;
+  const i = ny*W + nx, t = g.trail[i];
+  if (t){
+    if (t === e.id) { kill(e, null, '내 선을 밟았어요'); return; }
+    const v = g.ents[t-1]; if (v.alive) kill(v, e, '선이 끊겼어요');
+  }
+  if (g.owner[i] !== e.id){ g.trail[i] = e.id; e.trailCells.push(i); }
+  else if (e.trailCells.length) capture(e);
+  if (!e.alive) return;
+  if (e.isPlayer && !g.autopilot){
+    if (e.q.length){ const d = e.q.shift(); if (d !== ((e.md+2)&3)) e.md = d; }
+  } else botThink(e);
+}
+
+function capture(e){
+  const g = G, id = e.id, before = g.counts[id];
+  for (const c of e.trailCells){ if (g.trail[c] === id) g.trail[c] = 0; setOwner(c, id); }
+  e.trailCells = [];
+  // flood from map edge through cells that are not mine; anything unreached is enclosed
+  const vis = g.vis, q = g.q, own = g.owner; vis.fill(0);
+  let qh = 0, qt = 0;
+  const push = i => { if (!vis[i] && own[i] !== id){ vis[i] = 1; q[qt++] = i; } };
+  for (let x = 0; x < W; x++){ push(x); push((H-1)*W + x); }
+  for (let y = 0; y < H; y++){ push(y*W); push(y*W + W-1); }
+  while (qh < qt){
+    const i = q[qh++], x = i % W;
+    if (x > 0) push(i-1); if (x < W-1) push(i+1);
+    if (i >= W) push(i-W); if (i < N-W) push(i+W);
+  }
+  for (let i = 0; i < N; i++) if (!vis[i] && own[i] !== id) setOwner(i, id);
+  const gained = g.counts[id] - before;
+  for (const o of g.ents) if (o !== e && o.alive && g.counts[o.id] === 0) kill(o, e, '땅을 모두 빼앗겼어요');
+  if (e.isPlayer){
+    const pct = gained / N * 100;
+    if (g.time - e.lastCap < 3.5 && gained >= 4) e.combo++; else e.combo = 1;
+    e.lastCap = g.time; e.bestCombo = Math.max(e.bestCombo, e.combo);
+    floatText(e.x+.5, e.y-.4, '+' + pct.toFixed(1) + '%', e.col.d, pct > 3);
+    if (e.combo >= 2) floatText(e.x+.5, e.y-1.6, '연속 x' + e.combo + '!', '#C98F0C', true, .25);
+    burst(e.x, e.y, e.col.c, Math.min(26, 8 + Math.floor(gained/6)));
+    sfx('cap', 1 + pct);
+    if (pct > 4) { g.shake = Math.max(g.shake, 4); buzz(20); }
+    if (g.counts[id] / N >= CONQUER) g.conquer = true;
+  }
+}
+
+function kill(v, killer, reason){
+  const g = G; if (!v.alive) return;
+  v.alive = false; v.deathArea = g.counts[v.id];
+  for (const c of v.trailCells) if (g.trail[c] === v.id) g.trail[c] = 0;
+  v.trailCells = [];
+  for (let i = 0; i < N; i++) if (g.owner[i] === v.id) g.owner[i] = 0;
+  g.counts[v.id] = 0;
+  burst(v.x, v.y, v.col.c, 24);
+  if (killer){
+    killer.kills++;
+    if (killer.isPlayer){ floatText(v.x+.5, v.y-.4, '끊었다!', '#E5394F', true); sfx('kill'); g.shake = Math.max(g.shake, 7); buzz(30); }
+  }
+  if (v.isPlayer){
+    g.deathReason = reason; g.killerName = killer ? killer.name : null;
+    sfx('die'); g.shake = 12; buzz([40,40,80]); g.endDelay = 1.3;
+  } else v.respawn = 2.5 + Math.random()*2;
+}
+
+function headCollisions(){
+  const es = G.ents;
+  for (let a = 0; a < es.length; a++) for (let b = a+1; b < es.length; b++){
+    const A = es[a], B = es[b];
+    if (!A.alive || !B.alive || A.x !== B.x || A.y !== B.y) continue;
+    const la = A.trailCells.length, lb = B.trailCells.length;
+    if (la > lb) kill(A, B, '정면으로 부딪혔어요');
+    else if (lb > la) kill(B, A, '정면으로 부딪혔어요');
+    else { kill(A, null, '정면으로 부딪혔어요'); kill(B, null, '정면으로 부딪혔어요'); }
+  }
+}
+
+/* ---------- bots ---------- */
+function bfs(b, pred, maxD){
+  const g = G, vis = g.vis2, q = g.q2, fd = g.fd, dist = g.dist;
+  vis.fill(0); vis[b.y*W + b.x] = 1;
+  let qh = 0, qt = 0; const back = (b.md + 2) & 3;
+  for (let d = 0; d < 4; d++){
+    if (d === back && b.trailCells.length) continue;
+    const nx = b.x + DX[d], ny = b.y + DY[d]; if (!inb(nx, ny)) continue;
+    const i = ny*W + nx; if (g.trail[i] === b.id) continue;
+    vis[i] = 1; fd[i] = d; dist[i] = 1; if (pred(i)) return d; q[qt++] = i;
+  }
+  while (qh < qt){
+    const i = q[qh++]; if (dist[i] >= maxD) continue;
+    const x = i % W, y = (i / W) | 0;
+    for (let d = 0; d < 4; d++){
+      const nx = x + DX[d], ny = y + DY[d]; if (!inb(nx, ny)) continue;
+      const j = ny*W + nx; if (vis[j] || g.trail[j] === b.id) continue;
+      vis[j] = 1; fd[j] = fd[i]; dist[j] = dist[i] + 1;
+      if (pred(j)) return fd[j]; q[qt++] = j;
+    }
+  }
+  return -1;
+}
+function danger(b){
+  if (!b.trailCells.length) return false;
+  for (const o of G.ents){
+    if (o === b || !o.alive) continue;
+    if (Math.abs(o.x-b.x) + Math.abs(o.y-b.y) <= 4) return true;
+    const tc = b.trailCells;
+    for (let k = 0; k < tc.length; k += 2){
+      const c = tc[k]; if (Math.abs(o.x - c % W) + Math.abs(o.y - ((c / W) | 0)) <= 2) return true;
+    }
+  }
+  return false;
+}
+function safe(b, d){
+  const nx = b.x + DX[d], ny = b.y + DY[d];
+  return inb(nx, ny) && G.trail[ny*W + nx] !== b.id;
+}
+function botThink(b){
+  const g = G, ai = b.ai, home = g.owner[b.y*W + b.x] === b.id, tl = b.trailCells.length;
+  let want = b.md;
+  if (home){
+    if (ai.mode !== 'hunt'){
+      ai.mode = 'exit'; ai.s = 0;
+      if (Math.random() < .18) want = turn(b.md, Math.random() < .5 ? 1 : -1);
+    }
+  } else {
+    ai.s++;
+    if (ai.mode === 'exit'){
+      if (ai.s === 1){
+        ai.legA = 2 + rnd(Math.max(2, Math.round(6*ai.greed)));
+        ai.legB = 2 + rnd(Math.max(2, Math.round(6*ai.greed)));
+        ai.side = Math.random() < .5 ? 1 : -1;
+      }
+      if (ai.s === ai.legA) want = turn(b.md, ai.side);
+      else if (ai.s === ai.legA + ai.legB){ want = turn(b.md, ai.side); ai.mode = 'home'; }
+    }
+    if (tl > ai.maxTrail || danger(b)) ai.mode = 'home';
+  }
+  const isEnemyTrail = i => g.trail[i] && g.trail[i] !== b.id;
+  if (ai.mode === 'hunt'){
+    const d = bfs(b, isEnemyTrail, 10);
+    if (d >= 0) want = d; else ai.mode = home ? 'exit' : 'home';
+  } else if (ai.mode !== 'home' && tl < 6 && Math.random() < ai.aggr * .5){
+    const d = bfs(b, isEnemyTrail, 9);
+    if (d >= 0){ ai.mode = 'hunt'; want = d; }
+  }
+  if (ai.mode === 'home' && !home){
+    const d = bfs(b, i => g.owner[i] === b.id, 400); if (d >= 0) want = d;
+  }
+  if (!safe(b, want)){
+    const opts = [turn(want,1), turn(want,-1), (want+2)&3].filter(d => d !== ((b.md+2)&3) || !tl);
+    for (const d of opts) if (safe(b, d)){ want = d; break; }
+  }
+  b.md = want;
+}
+
+/* ---------- fx ---------- */
+function burst(x, y, col, n){
+  const g = G;
+  for (let k = 0; k < n; k++){
+    const a = Math.random()*Math.PI*2, s = 2 + Math.random()*6;
+    g.parts.push({ x:x+.5, y:y+.5, vx:Math.cos(a)*s, vy:Math.sin(a)*s - 2, life:.6 + Math.random()*.4, t:0, col, sz:.18 + Math.random()*.22 });
+  }
+}
+function floatText(x, y, txt, col, big, delay=0){ G.floats.push({ x, y, txt, col, big, t:-delay, life:1.2 }); }
+function updateFx(dt){
+  const g = G;
+  for (const p of g.parts){ p.t += dt; p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 12*dt; p.vx *= .96; }
+  g.parts = g.parts.filter(p => p.t < p.life);
+  for (const f of g.floats) f.t += dt;
+  g.floats = g.floats.filter(f => f.t < f.life);
+  g.shake = Math.max(0, g.shake - dt*30);
+}
+
+/* ---------- loop ---------- */
+function update(dt){
+  const g = G; if (g.paused || g.over) return;
+  if (g.countdown > 0){
+    const prev = Math.ceil(g.countdown); g.countdown -= dt; const now = Math.ceil(g.countdown);
+    if (g.countdown <= 0){ showCount('시작!'); sfx('go'); setTimeout(()=>showCount(''), 600); }
+    else if (now !== prev || !$('count').textContent){ showCount(String(now)); sfx('count'); }
+    updateFx(dt); return;
+  }
+  g.time += dt; g.tutT += dt;
+  if (g.mode === 'play'){
+    if (g.conquer){ endRound('conquer'); return; }
+    if (g.player.alive && g.time >= ROUND){ endRound('time'); return; }
+    const left = Math.ceil(ROUND - g.time);
+    if (left <= 10 && left !== g.lastTick && g.player.alive){ g.lastTick = left; sfx('tick'); }
+    if (!g.player.alive){ g.endDelay -= dt; if (g.endDelay <= 0){ endRound('dead'); return; } }
+  } else if (g.time > 100) { newMatch('demo'); return; }
+  for (const e of g.ents){
+    if (!e.alive){ if (!e.isPlayer){ e.respawn -= dt; if (e.respawn <= 0) spawn(e); } continue; }
+    e.prog += e.speed * dt; let guard = 0;
+    while (e.prog >= 1 && e.alive && guard++ < 4){ e.prog -= 1; step(e); }
+  }
+  headCollisions();
+  updateFx(dt);
+}
+
+function camera(dt){
+  const g = G; let f = g.player;
+  if (!f){
+    f = g.ents[g.follow];
+    if (!f.alive){ let best = 0; g.ents.forEach((e,k)=>{ if (e.alive && g.counts[e.id] > best){ best = g.counts[e.id]; g.follow = k; } }); f = g.ents[g.follow]; }
+  }
+  const tx = f.x + .5 + (f.alive ? DX[f.md]*f.prog : 0), ty = f.y + .5 + (f.alive ? DY[f.md]*f.prog : 0);
+  const k = Math.min(1, dt * (g.player ? 10 : 2.5));
+  g.camX += (tx - g.camX) * k; g.camY += (ty - g.camY) * k;
+}
+
+/* ================= rendering ================= */
+const cv = $('game'), ctx = cv.getContext('2d');
+let VW = 0, VH = 0, DPR = 1, CS = 24;
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  VW = cv.clientWidth; VH = cv.clientHeight;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  CS = Math.max(16, Math.min(34, Math.min(VW, VH) / 17));
+}
+window.addEventListener('resize', resize);
+
+function rr(x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+
+function render(){
+  const g = G;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#DCE5EB'; ctx.fillRect(0, 0, VW, VH);
+  const sx = g.shake ? (Math.random()-.5)*g.shake : 0, sy = g.shake ? (Math.random()-.5)*g.shake : 0;
+  const ox = Math.round(VW/2 - g.camX*CS + sx), oy = Math.round(VH/2 - g.camY*CS + sy);
+  const x0 = Math.max(0, Math.floor(-ox/CS) - 1), x1 = Math.min(W-1, Math.ceil((VW-ox)/CS));
+  const y0 = Math.max(0, Math.floor(-oy/CS) - 1), y1 = Math.min(H-1, Math.ceil((VH-oy)/CS));
+
+  // board + graph-paper grid
+  ctx.fillStyle = '#F4F8FA'; ctx.fillRect(ox, oy, W*CS, H*CS);
+  ctx.strokeStyle = '#DDE6EC'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let x = x0; x <= x1+1; x++){ const px = ox + x*CS + .5; ctx.moveTo(px, oy + y0*CS); ctx.lineTo(px, oy + (y1+1)*CS); }
+  for (let y = y0; y <= y1+1; y++){ const py = oy + y*CS + .5; ctx.moveTo(ox + x0*CS, py); ctx.lineTo(ox + (x1+1)*CS, py); }
+  ctx.stroke();
+  ctx.strokeStyle = '#B9C8D4'; ctx.beginPath();
+  for (let x = Math.ceil(x0/8)*8; x <= x1+1; x += 8){ const px = ox + x*CS + .5; ctx.moveTo(px, oy + y0*CS); ctx.lineTo(px, oy + (y1+1)*CS); }
+  for (let y = Math.ceil(y0/8)*8; y <= y1+1; y += 8){ const py = oy + y*CS + .5; ctx.moveTo(ox + x0*CS, py); ctx.lineTo(ox + (x1+1)*CS, py); }
+  ctx.stroke();
+
+  const own = g.owner, es = g.ents;
+  // territory faces
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+    const o = own[y*W + x]; if (!o) continue;
+    ctx.fillStyle = es[o-1].col.l; ctx.fillRect(ox + x*CS, oy + y*CS, CS + .6, CS + .6);
+  }
+  // patterns
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+    const o = own[y*W + x]; if (!o) continue; const e = es[o-1]; if (e.pat === 'none') continue;
+    const px = ox + x*CS, py = oy + y*CS;
+    ctx.globalAlpha = .28; ctx.fillStyle = e.col.c; ctx.strokeStyle = e.col.c;
+    if (e.pat === 'check'){ if ((x + y) & 1) ctx.fillRect(px, py, CS + .6, CS + .6); }
+    else if (e.pat === 'dot'){ ctx.beginPath(); ctx.arc(px + CS/2, py + CS/2, CS*.14, 0, 7); ctx.fill(); }
+    else { ctx.lineWidth = CS*.16; ctx.beginPath(); ctx.moveTo(px, py + CS); ctx.lineTo(px + CS, py); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+  // raised edge (tile thickness)
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+    const i = y*W + x, o = own[i]; if (!o) continue;
+    if (y === H-1 || own[i+W] !== o){ ctx.fillStyle = es[o-1].col.c; ctx.fillRect(ox + x*CS, oy + (y+1)*CS - CS*.04, CS + .6, CS*.24); }
+  }
+  // map border
+  ctx.strokeStyle = '#1D2738'; ctx.lineWidth = 3; ctx.strokeRect(ox - 1.5, oy - 1.5, W*CS + 3, H*CS + 3);
+
+  // trails
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const e of es){
+    if (!e.alive || !e.trailCells.length) continue;
+    ctx.globalAlpha = .62; ctx.strokeStyle = e.col.c; ctx.lineWidth = CS*.58; ctx.beginPath();
+    const hx = e.x + DX[e.md]*e.prog, hy = e.y + DY[e.md]*e.prog;
+    // start the line at the edge of the territory cell the trail left from
+    const f = e.trailFrom ?? e.trailCells[0], c0 = e.trailCells[0];
+    const fx = f % W, fy = (f / W) | 0, cx0 = c0 % W, cy0 = (c0 / W) | 0;
+    ctx.moveTo(ox + ((fx + cx0)/2 + .5)*CS, oy + ((fy + cy0)/2 + .5)*CS);
+    for (let k = 0; k < e.trailCells.length; k++){ const c = e.trailCells[k]; ctx.lineTo(ox + (c % W + .5)*CS, oy + (((c / W) | 0) + .5)*CS); }
+    ctx.lineTo(ox + (hx + .5)*CS, oy + (hy + .5)*CS); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+
+  // heads
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  for (const e of es){
+    if (!e.alive) continue;
+    const hx = ox + (e.x + DX[e.md]*e.prog + .5)*CS, hy = oy + (e.y + DY[e.md]*e.prog + .5)*CS;
+    const age = g.time - e.spawnT, sc = age < .35 ? .4 + (age/.35)*.6 : 1;
+    const s = CS * 1.18 * sc;
+    ctx.fillStyle = 'rgba(29,39,56,.18)'; ctx.beginPath(); ctx.ellipse(hx, hy + s*.48, s*.46, s*.16, 0, 0, 7); ctx.fill();
+    rr(hx - s/2, hy - s/2 + s*.12, s, s, s*.28); ctx.fillStyle = e.col.d; ctx.fill();
+    rr(hx - s/2, hy - s/2, s, s, s*.28); ctx.fillStyle = e.col.c; ctx.fill();
+    // eyes look where it is heading
+    const fx = DX[e.md], fy = DY[e.md], px = -fy, py = fx;
+    for (const side of [-1, 1]){
+      const ex = hx + px*side*s*.2 + fx*s*.1, ey = hy + py*side*s*.2 + fy*s*.1 - s*.04;
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex, ey, s*.15, 0, 7); ctx.fill();
+      ctx.fillStyle = '#1D2738'; ctx.beginPath(); ctx.arc(ex + fx*s*.06, ey + fy*s*.06, s*.075, 0, 7); ctx.fill();
+    }
+    // name tag
+    const fs = Math.max(11, CS*.5);
+    ctx.font = fs + 'px Jua, "Apple SD Gothic Neo", sans-serif';
+    ctx.lineWidth = 3.5; ctx.strokeStyle = '#fff'; ctx.strokeText(e.name, hx, hy - s*.72);
+    ctx.fillStyle = e.isPlayer ? '#152C8F' : '#1D2738'; ctx.fillText(e.name, hx, hy - s*.72);
+  }
+
+  // particles
+  for (const p of g.parts){
+    const a = 1 - p.t/p.life; ctx.globalAlpha = Math.max(0, a); ctx.fillStyle = p.col;
+    const s = p.sz*CS; ctx.fillRect(ox + p.x*CS - s/2, oy + p.y*CS - s/2, s, s);
+  }
+  ctx.globalAlpha = 1;
+  // floating text
+  for (const f of g.floats){
+    if (f.t < 0) continue;
+    const k = f.t / f.life, sc = k < .15 ? .5 + k/.15*.5 : 1;
+    const fs = (f.big ? CS*1.0 : CS*.75) * sc;
+    ctx.globalAlpha = k > .7 ? (1 - k)/.3 : 1;
+    ctx.font = fs + 'px Jua, "Apple SD Gothic Neo", sans-serif';
+    const tx = ox + f.x*CS, ty = oy + (f.y - k*1.4)*CS;
+    ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.strokeText(f.txt, tx, ty);
+    ctx.fillStyle = f.col; ctx.fillText(f.txt, tx, ty);
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- HUD ---------- */
+const mini = $('mini'), mctx = mini.getContext('2d'), mimg = mctx.createImageData(W, H);
+let hudT = 0, rgbCache = {};
+function rgbOf(h){ return rgbCache[h] || (rgbCache[h] = hexRgb(h)); }
+function hud(dt){
+  const g = G; if (g.mode !== 'play') return;
+  hudT -= dt; if (hudT > 0) return; hudT = .12;
+  const p = g.player, left = Math.max(0, ROUND - g.time);
+  const tEl = $('timer'); tEl.textContent = Math.floor(left/60) + ':' + String(Math.floor(left%60)).padStart(2,'0');
+  tEl.classList.toggle('hurry', left <= 10);
+  const pct = (p.alive ? g.counts[p.id] : p.deathArea) / N * 100;
+  $('mine').innerHTML = pct.toFixed(1) + '<small>%</small>';
+  const rows = g.ents.filter(e => e.alive || e.isPlayer).map(e => ({ e, a: e.alive ? g.counts[e.id] : e.deathArea }))
+    .sort((a, b) => b.a - a.a);
+  let html = '', shown = 0, meShown = false;
+  rows.forEach((r, k) => {
+    if (shown < 4 || (r.e.isPlayer && !meShown)){
+      html += `<div class="r${r.e.isPlayer ? ' me' : ''}"><i style="background:${r.e.col.c}"></i><span>${k+1}. ${r.e.name}</span><b>${(r.a/N*100).toFixed(1)}%</b></div>`;
+      shown++; if (r.e.isPlayer) meShown = true;
+    }
+  });
+  $('board').innerHTML = html;
+  // minimap
+  const d = mimg.data;
+  for (let i = 0; i < N; i++){
+    const o = g.owner[i], t = g.trail[i], k = i*4;
+    if (o || t){ const c = rgbOf(t ? g.ents[t-1].col.c : g.ents[o-1].col.l); d[k] = c[0]; d[k+1] = c[1]; d[k+2] = c[2]; d[k+3] = 255; }
+    else { d[k] = 244; d[k+1] = 248; d[k+2] = 250; d[k+3] = 255; }
+  }
+  if (p.alive) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){
+    const x = p.x + dx, y = p.y + dy; if (!inb(x, y)) continue; const k = (y*W + x)*4;
+    d[k] = 29; d[k+1] = 39; d[k+2] = 56; d[k+3] = 255;
+  }
+  mctx.putImageData(mimg, 0, 0);
+  // first-games tutorial tips
+  const tip = $('tip');
+  if (P.tutorial < 2 && g.countdown <= 0 && g.time < 15){
+    const tips = ['화면을 밀어서 방향을 바꿔요', '내 땅으로 돌아오면 감싼 곳이 전부 내 땅!', '내 선을 밟히면 탈락! 너무 멀리 가지 마세요'];
+    tip.hidden = false; tip.textContent = tips[Math.min(2, Math.floor(g.time / 5))];
+  } else tip.hidden = true;
+}
+function showCount(t){ const el = $('count'); el.hidden = !t; el.innerHTML = t ? '<span>' + t + '</span>' : ''; }
+
+/* ================= input ================= */
+function queueDir(d){
+  const g = G; if (!g || g.mode !== 'play' || g.paused || g.over) return;
+  const p = g.player; if (!p.alive) return;
+  const last = p.q.length ? p.q[p.q.length-1] : p.md;
+  if (d === last || d === ((last+2)&3)) return;
+  if (p.q.length < 2) p.q.push(d);
+}
+const KEYMAP = { ArrowRight:0, KeyD:0, ArrowDown:1, KeyS:1, ArrowLeft:2, KeyA:2, ArrowUp:3, KeyW:3 };
+window.addEventListener('keydown', ev => {
+  if (ev.code in KEYMAP && G && G.mode === 'play'){ queueDir(KEYMAP[ev.code]); ev.preventDefault(); return; }
+  if ((ev.code === 'Space' || ev.code === 'Escape') && G && G.mode === 'play' && !G.over){ togglePause(); ev.preventDefault(); return; }
+  if (ev.code === 'Enter' && !$('results').hidden){ startGame(); }
+});
+let tp = null;
+cv.addEventListener('pointerdown', ev => { tp = { x:ev.clientX, y:ev.clientY }; try { cv.setPointerCapture(ev.pointerId); } catch(e){} });
+cv.addEventListener('pointermove', ev => {
+  if (!tp) return;
+  const dx = ev.clientX - tp.x, dy = ev.clientY - tp.y;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 16) return;
+  queueDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3));
+  tp = { x:ev.clientX, y:ev.clientY };
+});
+const endTouch = () => { tp = null; };
+cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && G.mode === 'play' && !G.over && !G.paused) togglePause(); });
+
+/* ================= screens ================= */
+const SCREENS = ['title', 'howto', 'pause', 'results'];
+function show(name){
+  for (const s of SCREENS) $(s).hidden = s !== name;
+  const playing = G && G.mode === 'play' && (name === null || name === 'pause');
+  $('hud').hidden = !playing; $('mini').hidden = !playing;
+  if (!playing){ $('tip').hidden = true; showCount(''); }
+}
+
+function swatchStyle(sk){
+  const c = PALETTE[sk.col];
+  let bg = c.l;
+  if (sk.pat === 'dot') bg = `radial-gradient(circle, ${c.c}66 22%, transparent 24%) 0 0/15.5px 15.5px, ${c.l}`;
+  else if (sk.pat === 'stripe') bg = `repeating-linear-gradient(135deg, ${c.c}55 0 4px, transparent 4px 11px), ${c.l}`;
+  else if (sk.pat === 'check') bg = `conic-gradient(${c.c}55 25%, transparent 0 50%, ${c.c}55 0 75%, transparent 0) 0 0/20.6px 20.6px, ${c.l}`;
+  return `background:${bg};box-shadow:0 6px 0 ${c.c}`;
+}
+
+let buyArm = -1;
+function renderTitle(){
+  ensureDaily();
+  $('tLv').textContent = P.level;
+  $('tXp').style.width = Math.min(100, P.xp / xpNeed(P.level) * 100) + '%';
+  $('tCoins').textContent = P.coins;
+  $('tStreakPill').hidden = !(P.streak > 0 && (P.lastDay === today() || P.lastDay === yesterday()));
+  $('tStreak').textContent = P.streak;
+  $('soundBtn').innerHTML = P.sound
+    ? '<svg viewBox="0 0 20 20"><path d="M3 8h3l4-4v12l-4-4H3z" fill="#1D2738"/><path d="M13 7c1.3 1.6 1.3 4.4 0 6M15.5 5c2.3 2.8 2.3 7.2 0 10" stroke="#1D2738" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'
+    : '<svg viewBox="0 0 20 20"><path d="M3 8h3l4-4v12l-4-4H3z" fill="#1D2738"/><path d="M13 8l5 5M18 8l-5 5" stroke="#1D2738" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  // skins
+  const wrap = $('skins'); wrap.innerHTML = '';
+  SKINS.forEach((sk, k) => {
+    const owned = P.owned.includes(k);
+    const b = document.createElement('button');
+    b.className = 'skin' + (P.skin === k ? ' sel' : '') + (owned ? '' : ' locked') + (buyArm === k ? ' buy' : '');
+    b.setAttribute('aria-label', sk.name + (owned ? '' : ' 잠김'));
+    const lockTxt = buyArm === k ? '한 번 더<br>누르면 구매' : `Lv ${sk.lv}<br>또는 ${sk.price}C`;
+    b.innerHTML = `<div class="sw" style="${swatchStyle(sk)}">${owned ? '' : `<div class="lk">${lockTxt}</div>`}</div><div class="nm">${sk.name}</div>`;
+    b.onclick = () => {
+      if (owned){ P.skin = k; buyArm = -1; save(); renderTitle(); return; }
+      if (P.coins < sk.price){ $('skinHint').textContent = `코인 ${sk.price - P.coins}개가 더 필요해요`; buyArm = -1; renderTitle(); return; }
+      if (buyArm !== k){ buyArm = k; $('skinHint').textContent = '한 번 더 누르면 구매해요'; renderTitle(); return; }
+      P.coins -= sk.price; P.owned.push(k); P.skin = k; buyArm = -1; save(); sfx('lvl');
+      $('skinHint').textContent = sk.name + ' 획득!'; renderTitle();
+    };
+    wrap.appendChild(b);
+  });
+  // missions
+  const mw = $('missions'); mw.innerHTML = '';
+  for (const m of P.daily.ms){
+    const def = MISSIONS[m.t];
+    const pct = Math.min(100, m.prog / m.target * 100);
+    const el = document.createElement('div');
+    el.className = 'mission' + (m.done ? ' done' : '');
+    el.innerHTML = `<div class="mt">${def.txt(m.target)}</div><div class="mr">${m.done ? '완료' : '+' + def.rw + 'C'}</div><div class="bar"><i style="width:${pct}%"></i></div>`;
+    mw.appendChild(el);
+  }
+  $('sBest').textContent = P.best.toFixed(1) + '%';
+  $('sWins').textContent = P.wins;
+  $('sKills').textContent = P.kills;
+}
+
+function startGame(){
+  ac();
+  newMatch('play');
+  show(null);
+  $('timer').textContent = '2:30'; $('mine').innerHTML = '0.0<small>%</small>';
+  hudT = 0;
+}
+function goHome(){
+  newMatch('demo'); buyArm = -1; $('skinHint').textContent = '눌러서 고르기';
+  renderTitle(); show('title');
+}
+function togglePause(){
+  const g = G; if (!g || g.mode !== 'play' || g.over) return;
+  g.paused = !g.paused; show(g.paused ? 'pause' : null);
+}
+
+/* ---------- end of round + rewards ---------- */
+function endRound(reason){
+  const g = G; if (g.over) return; g.over = true;
+  const p = g.player, survived = p.alive;
+  const area = survived ? g.counts[p.id] : p.deathArea;
+  const pct = area / N * 100;
+  const standings = g.ents.map(e => ({ e, a: e === p ? area : (e.alive ? g.counts[e.id] : 0) })).sort((a, b) => b.a - a.a);
+  const rank = standings.findIndex(s => s.e === p) + 1;
+
+  const lines = [];
+  const add = (label, v) => { if (v > 0) lines.push([label, v]); };
+  add(`땅 ${pct.toFixed(1)}%`, Math.round(pct * 1.5));
+  add(`선 끊기 ${p.kills}번`, p.kills * 5);
+  add(`${rank}위 보너스`, [25, 12, 6, 0, 0, 0][rank-1]);
+  if (survived) add('끝까지 생존', 10);
+  if (reason === 'conquer') add('완전 정복!', 100);
+  if (P.lastDay !== today()){
+    P.streak = P.lastDay === yesterday() ? P.streak + 1 : 1; P.lastDay = today();
+    add(`출석 ${P.streak}일째`, Math.min(100, 20 * P.streak));
+  }
+  // daily missions
+  ensureDaily();
+  for (const m of P.daily.ms){
+    if (m.done) continue;
+    if (m.t === 'area') m.prog = Math.max(m.prog, Math.floor(pct));
+    else if (m.t === 'kills') m.prog += p.kills;
+    else if (m.t === 'games') m.prog += 1;
+    else if (m.t === 'combo') m.prog = Math.max(m.prog, p.bestCombo);
+    else if (m.t === 'survive') m.prog += survived ? 1 : 0;
+    else if (m.t === 'top') m.prog = Math.max(m.prog, rank === 1 ? 1 : 0);
+    if (m.prog >= m.target){ m.done = true; add('미션: ' + MISSIONS[m.t].txt(m.target), MISSIONS[m.t].rw); }
+  }
+  const coins = lines.reduce((s, l) => s + l[1], 0);
+  const xpGain = Math.round(pct * 4) + p.kills * 15 + [40, 25, 12, 5, 0, 0][rank-1] + (survived ? 15 : 0) + 10;
+
+  const oldLv = P.level, oldXp = P.xp;
+  P.coins += coins; P.games++; P.kills += p.kills; if (rank === 1) P.wins++;
+  P.best = Math.max(P.best, pct); P.tutorial++;
+  P.xp += xpGain; const unlocked = [];
+  while (P.xp >= xpNeed(P.level)){
+    P.xp -= xpNeed(P.level); P.level++;
+    SKINS.forEach((sk, k) => { if (sk.lv === P.level && !P.owned.includes(k)){ P.owned.push(k); unlocked.push(k); } });
+  }
+  save();
+
+  // headline
+  $('rBadge').textContent = reason === 'dead' ? '탈락' : reason === 'conquer' ? '완전 정복' : '시간 종료';
+  $('rRank').textContent = rank + '위';
+  $('rSub').textContent = reason === 'dead'
+    ? (g.killerName
+        ? (g.deathReason.startsWith('정면') ? `${josa(g.killerName,'과','와')} 정면으로 부딪혔어요.` : `${g.killerName}에게 ${g.deathReason}.`)
+        : g.deathReason + '.') + ' 탈락 직전 땅으로 순위를 매겼어요.'
+    : reason === 'conquer' ? '지도의 60%를 차지했어요. 이 판은 당신 거예요!'
+    : rank === 1 ? '이번 판 땅 부자는 당신이에요!' : `1위 ${josa(standings[0].e.name,'과','와')} ${((standings[0].a - area)/N*100).toFixed(1)}% 차이였어요.`;
+  $('rPct').textContent = pct.toFixed(1) + '%';
+  $('rKills').textContent = p.kills;
+  $('rCombo').textContent = 'x' + p.bestCombo;
+  $('rRewards').innerHTML = lines.map(l => `<div class="rw"><span>${l[0]}</span><b>+${l[1]}</b></div>`).join('') || '<div class="rw"><span>다음 판엔 땅을 더 넓혀 봐요</span><b>+0</b></div>';
+  $('rUnlocks').innerHTML = (P.level > oldLv ? `<div class="unlock"><div class="sw" style="background:var(--blue);box-shadow:0 4px 0 var(--blue-dark);display:grid;place-items:center;color:#fff;font-family:var(--f-display);font-size:18px">${P.level}</div><div><b>레벨 업!</b><br>Lv ${P.level} 달성</div></div>` : '')
+    + unlocked.map(k => `<div class="unlock"><div class="sw" style="${swatchStyle(SKINS[k])}"></div><div><b>새 스킨: ${SKINS[k].name}</b><br>홈에서 골라 쓸 수 있어요</div></div>`).join('');
+  $('rXpTxt').textContent = '+' + xpGain + ' XP';
+  $('rLv').textContent = 'Lv ' + oldLv;
+  const bar = $('rXp');
+  bar.style.transition = 'none'; bar.style.width = (oldXp / xpNeed(oldLv) * 100) + '%';
+  setTimeout(() => {
+    bar.style.transition = '';
+    if (P.level > oldLv){
+      bar.style.width = '100%';
+      setTimeout(() => { bar.style.transition = 'none'; bar.style.width = '0%'; $('rLv').textContent = 'Lv ' + P.level; sfx('lvl');
+        setTimeout(() => { bar.style.transition = ''; bar.style.width = (P.xp / xpNeed(P.level) * 100) + '%'; }, 40); }, 950);
+    } else bar.style.width = (P.xp / xpNeed(P.level) * 100) + '%';
+  }, 300);
+  // coin count-up
+  const tot = $('rTotal'); let shown = 0; const steps = Math.max(1, Math.min(30, coins));
+  tot.textContent = '0';
+  const iv = setInterval(() => { shown = Math.min(coins, shown + Math.ceil(coins / steps)); tot.textContent = shown; if (shown % 3 === 0) sfx('coin'); if (shown >= coins) clearInterval(iv); }, 35);
+  setTimeout(() => show('results'), reason === 'dead' ? 0 : 250);
+}
+
+/* ---------- wiring ---------- */
+$('playBtn').onclick = startGame;
+$('againBtn').onclick = startGame;
+$('homeBtn').onclick = goHome;
+$('howBtn').onclick = () => show('howto');
+$('howClose').onclick = () => { renderTitle(); show('title'); };
+$('pauseBtn').onclick = togglePause;
+$('resumeBtn').onclick = togglePause;
+$('quitBtn').onclick = () => { G.over = true; goHome(); };
+$('soundBtn').onclick = () => { P.sound = !P.sound; save(); renderTitle(); if (P.sound){ ac(); sfx('coin'); } };
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (G){ update(dt); camera(dt); render(); hud(dt); }
+  requestAnimationFrame(frame);
+}
+
+// test hook for automated play on Linux (headless browser)
+window.__ttang = {
+  get G(){ return G; }, get P(){ return P; }, start: startGame, home: goHome,
+  sim(seconds, dt = 1/60){ for (let t = 0; t < seconds; t += dt){ update(dt); camera(dt); } render(); hud(1); },
+  queue: queueDir,
+  autopilot(on){ if (G) G.autopilot = !!on; }
+};
+
+resize();
+goHome();
+requestAnimationFrame(frame);
+
+// offline play + "install app" support when served over http(s) (GitHub Pages, local server)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+})();
+</script>
