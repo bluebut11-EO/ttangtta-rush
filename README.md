@@ -40,8 +40,6 @@ npm run android:open   # Android Studio 에서 열어 실행/서명/출시 파�
 npm run ios:add && npm run ios:open   # Mac 에서만
 ```
 
-출시 전에 `capacitor.config.json` 의 `appId` 를 내 것으로 바꾸세요. 한 번 출시하면 바꿀 수 없습니다.
-예: `com.내이름.ttangttarush`
 
 ## 폴더 구성
 
@@ -55,3 +53,21 @@ package.json            앱 포장 도구 목록과 명령
 ```
 
 게임 파일을 고친 뒤에는 `www/sw.js` 의 `VERSION` 숫자를 올려야 이미 설치한 사람에게도 새 버전이 전달됩니다.
+
+## Play 스토어 출시용 빌드 (AAB)
+
+앱 ID: `com.bluebut11.ttangttarush` (한 번 출시하면 바꿀 수 없습니다)
+
+1. **서명 키 만들기 (PC에서 한 번만):**
+
+   ```bash
+   sudo apt install default-jdk gh && gh auth login
+   bash setup-release-key.sh
+   ```
+
+   키는 `~/android-keys` 에 저장되고 GitHub Secrets 에 자동 등록됩니다. 이 폴더는 꼭 따로 백업하세요.
+2. **AAB 만들기:** GitHub > Actions > **Play 스토어 출시용 AAB 만들기** > Run workflow
+3. **올리기:** 실행 기록 > Artifacts 에서 `.aab` 를 내려받아 Play Console > 내부 테스트에 업로드
+   (Play App Signing 사용 권장, 버전 코드는 실행 번호로 자동 증가)
+
+새 버전을 낼 때는 `package.json` 의 `version` 을 올리고 2번부터 반복합니다.
